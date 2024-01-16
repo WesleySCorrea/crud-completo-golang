@@ -1,24 +1,46 @@
 package controller
 
 import (
-	"fmt"
+	"net/http"
 
-	"github.com/WesleySCorrea/crud-completo-golang/src/configuration/rest_err"
+	"github.com/WesleySCorrea/crud-completo-golang/src/configuration/logger"
+	"github.com/WesleySCorrea/crud-completo-golang/src/configuration/validation"
 	"github.com/WesleySCorrea/crud-completo-golang/src/controller/model/request"
+	"github.com/WesleySCorrea/crud-completo-golang/src/model"
+	"github.com/WesleySCorrea/crud-completo-golang/src/view"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func CreateUser(c *gin.Context) {
+var (
+	UserDomainInterface model.UserDomainInterface
+)
 
+func (uc *userControllerInterface) CreateUser(c *gin.Context) {
+	logger.Info("Init CreateUser controller", zap.String("journey", "CreateUser"))
 	var userRequest request.UserRequest
 
 	if err := c.ShouldBindJSON(&userRequest); err != nil {
-		rest_err := rest_err.NewBadRequestError(
-			fmt.Sprintf("There are some incorect filds, erro=%s\n", err.Error()))
+		logger.Error("Error trying to validate user info", err, zap.String("journey", "CreateUser"))
+		errRest := validation.ValidateUserError(err)
 
-		c.JSON(rest_err.Code, rest_err)
+		c.JSON(errRest.Code, errRest)
 		return
 	}
 
-	fmt.Println(userRequest)
+	domain := model.NewUserDomain(
+		userRequest.Email,
+		userRequest.Password,
+		userRequest.Name,
+		userRequest.Age,
+	)
+
+	if err := uc.service.CreateUser(domain); err != nil {
+		c.JSON(err.Code, err)
+		return
+	}
+
+	logger.Info("User Create successfuly", zap.String("journey", "CreateUser"))
+
+	c.JSON(http.StatusOK, view.ConvertDomainToResonse(domain))
 }

@@ -5,12 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FindUserByID(c *gin.Context) {
+func (ud *userControllerInterface) FindUserByID(c *gin.Context) {
 
 	err := rest_err.NewBadRequestError("VocÊ chamou essa rota")
 	c.JSON(err.Code, err)
 }
 
-func FindUserByEmail(c *gin.Context) {
+func (uc *userControllerInterface) FindUserByEmail(c *gin.Context) {
 
 }
